@@ -1,4 +1,5 @@
-.ipynb_checkpoints
-.env
 .idea
+.env
+.ipynb_checkpoints
+**/__pycache__
 earthdata_tiles
