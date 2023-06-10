@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-class ConvBlock(nn.Module):
+class ConvBlock(nn.Module): # Block of layers that applies 2 convolutions, each followed by a ReLU
     def __init__(self, in_channels, out_channels):
         super().__init__()
         
@@ -16,7 +16,7 @@ class ConvBlock(nn.Module):
         out = self.relu(out)
         return out
 
-class EncoderBlock(nn.Module):
+class EncoderBlock(nn.Module): # Block of layers for each step of the UNet's encoder: double convolution and maxpooling, to extract increasing features
     def __init__(self, in_channels, out_channels):
         super().__init__()
         
@@ -28,7 +28,7 @@ class EncoderBlock(nn.Module):
         encoded = self.max_pool(convolved)
         return convolved, encoded
         
-class DecoderBlock(nn.Module):
+class DecoderBlock(nn.Module): # Block of layers for each step of the UNet's decoder: transposed convolution, skip connection from the encoder, and 2 double convolutions
     def __init__(self, in_channels, out_channels):
         super().__init__()
         
@@ -43,7 +43,7 @@ class DecoderBlock(nn.Module):
         out = self.conv_block_2(out)
         return out
 
-class Generator(nn.Module):
+class Generator(nn.Module): # 4 encoding steps with increasing features from 64 to 512, bottle neck, 4 decoding steps, and output 1 channel. Output has the same spacial size as the input
     def __init__(self, in_channels, out_channels):
         super().__init__()
 

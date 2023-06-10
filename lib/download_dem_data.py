@@ -1,7 +1,7 @@
 import os
 from osgeo import gdal
 
-def process_tile_file(tile_file_path):
+def process_tile_file(tile_file_path): # Open the file with gdal and update the NoData value
     raster = gdal.Open(tile_file_path, gdal.GA_Update)
     band = raster.GetRasterBand(1)
     band.SetNoDataValue(-9999)
@@ -9,7 +9,7 @@ def process_tile_file(tile_file_path):
     del band
     del raster
 
-def download_tile(download_url, destination_path, session):
+def download_tile(download_url, destination_path, session): # If the file doesn't exist yet, download it
     if (os.path.isfile(destination_path)):
         return f"File {destination_path} already exists"
     

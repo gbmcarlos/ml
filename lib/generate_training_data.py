@@ -7,7 +7,7 @@ import rasterio
 import cv2
 from skimage.morphology import skeletonize
 
-def generate_sketch(input_file_path, options):
+def generate_sketch(input_file_path, options): # Given a DEM, extract the sea, the rivers and the edges, and put them together in a 3 channel image
     sketch_id = os.path.basename(input_file_path)
     
     grid, dem, original_dem = preprocess_dem(input_file_path, options)
@@ -21,7 +21,7 @@ def generate_sketch(input_file_path, options):
     
     return (sketch_id, original_dem, sketch)
 
-def preprocess_dem(input_file_path, options):
+def preprocess_dem(input_file_path, options): # Downsample to the desired size, keeping the geospatial information
     grid = Grid.from_raster(input_file_path)
     original_raster = rasterio.open(input_file_path).read(1)
 
@@ -37,7 +37,7 @@ def preprocess_dem(input_file_path, options):
     grid.viewfinder = new_view_finder
     return grid, new_raster, original_raster
 
-def extract_sea(grid, dem, options):
+def extract_sea(grid, dem, options): # Simple mask to extract the area of elevation 0
     sea = np.zeros_like(dem, dtype=np.uint8)
     sea[dem <= 0] = 255
     # sea = blur(sea, 3)
@@ -49,12 +49,12 @@ def extract_rivers(grid, dem, land_mask, options):
     return rivers
 
 
-def extract_ridges(grid, dem, land_mask, options):
+def extract_ridges(grid, dem, land_mask, options): # Invert the DEM and calculate the same as rivers
     dem = dem.max() - dem
     ridges = extract_flow(grid, dem, land_mask, options)
     return ridges
 
-def extract_flow(grid, dem, land_mask, options):
+def extract_flow(grid, dem, land_mask, options): # Condition the DEM (resolving flats and pits), calculate flow direction and accumulation, normalize, threshold, and simplify
     conditioned_dem = condition_dem(grid, dem)
 
     direction_map = (64, 128, 1, 2, 4, 8, 16, 32)
@@ -72,7 +72,7 @@ def extract_flow(grid, dem, land_mask, options):
 
     return flow
 
-def simplify(flow, options):
+def simplify(flow, options): # Accentuate everything and skeletonize it to 1 pixel width
 
     output = flow
     output = cv2.dilate(output, kernel=np.ones((10, 10), np.uint8), iterations=1) # Accentuate
