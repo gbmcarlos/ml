@@ -5,43 +5,43 @@ from pysheds.grid import Grid
 from pysheds.view import Raster, ViewFinder
 import rasterio
 import cv2
-import skimage
-import tempfile
-import stat
+from skimage.morphology import skeletonize
 
 def generate_sketch(input_file_path, options):
     sketch_id = os.path.basename(input_file_path)
     
     grid, dem, original_dem = preprocess_dem(input_file_path, options)
-    
-    sea = extract_sea(grid, dem)
+
+    sea = extract_sea(grid, dem, options)
     land_mask = (~sea.astype(bool)).astype(np.uint8)
     rivers = extract_rivers(grid, dem, land_mask, options)
     ridges = extract_ridges(grid, dem, land_mask, options)
 
     sketch = cv2.merge([sea, rivers, ridges]) # BGR
-
+    
     return (sketch_id, original_dem, sketch)
 
 def preprocess_dem(input_file_path, options):
     grid = Grid.from_raster(input_file_path)
     original_raster = rasterio.open(input_file_path).read(1)
 
-    blurred_dem = blur(original_raster, options["dem_blurring_iterations"])
+    downsampled_dem = cv2.resize(original_raster, (options["dem_target_size"], options["dem_target_size"]), cv2.INTER_NEAREST)
 
     new_view_finder = ViewFinder(
         affine=grid.affine,
         crs=grid.crs,
         nodata=grid.nodata,
-        shape=blurred_dem.shape
+        shape=downsampled_dem.shape
     )
-    new_raster = Raster(blurred_dem, new_view_finder)
+    new_raster = Raster(downsampled_dem, new_view_finder)
     grid.viewfinder = new_view_finder
     return grid, new_raster, original_raster
 
-def extract_sea(grid, dem):
+def extract_sea(grid, dem, options):
     sea = np.zeros_like(dem, dtype=np.uint8)
     sea[dem <= 0] = 255
+    # sea = blur(sea, 3)
+    sea = cv2.resize(sea, (options["sketch_target_size"], options["sketch_target_size"]), cv2.INTER_NEAREST)
     return sea
 
 def extract_rivers(grid, dem, land_mask, options):
@@ -51,7 +51,6 @@ def extract_rivers(grid, dem, land_mask, options):
 
 def extract_ridges(grid, dem, land_mask, options):
     dem = dem.max() - dem
-
     ridges = extract_flow(grid, dem, land_mask, options)
     return ridges
 
@@ -68,18 +67,19 @@ def extract_flow(grid, dem, land_mask, options):
     flow = np.array(flow * 255, dtype=np.uint8) # Normalize to [0,255]
 
     _, flow = cv2.threshold(flow, options["flow_threshold"], 255, cv2.THRESH_BINARY)
+    flow = simplify(flow, options)
     flow *= land_mask
-
-    # flow = skimage.morphology.skeletonize(flow).astype(np.uint8) * 255
-    # flow = smoothen(flow, 7, 16, -4)
 
     return flow
 
-def smoothen(data, blur, sharp1, sharp2):
-    blurred = cv2.GaussianBlur(data, (blur, blur), 0)
-    unsharp_mask = cv2.subtract(data, blurred)
-    sharp = cv2.addWeighted(data, sharp1, unsharp_mask, sharp2, 0)
-    return sharp
+def simplify(flow, options):
+
+    output = flow
+    output = cv2.dilate(output, kernel=np.ones((10, 10), np.uint8), iterations=1) # Accentuate
+    output = cv2.resize(output, (options["sketch_target_size"], options["sketch_target_size"]), cv2.INTER_NEAREST) # Downsample
+    output = (skeletonize(output)*225).astype('uint8') # Simplify
+
+    return output
 
 def condition_dem(grid, dem):
     pit_filled_dem = grid.fill_pits(dem)
@@ -87,21 +87,7 @@ def condition_dem(grid, dem):
     inflated_dem = grid.resolve_flats(flooded_dem)
     return inflated_dem
 
-def blur(data, iterations):
-    for i in range(iterations):
-        data = downsample(data)
-    for i in range(iterations):
-        data = upsample(data)
-    return data
-
-def upsample(data):
-    return cv2.pyrUp(data, dstsize=(
-        data.shape[1] * 2,
-        data.shape[0] * 2
-    ))
-
-def downsample(data):
-    return cv2.pyrDown(data, dstsize=(
-        data.shape[1] // 2,
-        data.shape[0] // 2
-    ))
+def plot(title, image):
+    print(title)
+    plt.imshow(image, cmap='Greys')
+    plt.show()

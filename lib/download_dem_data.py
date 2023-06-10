@@ -1,7 +1,4 @@
 import os
-import io
-import requests
-from dotenv import load_dotenv
 from osgeo import gdal
 
 def process_tile_file(tile_file_path):
@@ -17,7 +14,6 @@ def download_tile(download_url, destination_path, session):
         return f"File {destination_path} already exists"
     
     flightRequest = session.request('get', download_url) # Make a flight request to get a session cookie
-    # print(session.auth, flush=True)
     contentRequest = session.get(flightRequest.url)
     if contentRequest.ok:
         file = open(destination_path, 'wb')
