@@ -2,15 +2,15 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from pysheds.grid import Grid
-from pysheds.view import Raster, ViewFinder
-import rasterio
 import cv2
 from skimage.morphology import skeletonize
 
 def generate_sketch(input_file_path, options): # Given a DEM, extract the sea, the rivers and the edges, and put them together in a 3 channel image
     sketch_id = os.path.basename(input_file_path)
-    
-    grid, dem, original_dem = preprocess_dem(input_file_path, options)
+
+    grid = Grid.from_raster(input_file_path)
+    dem = grid.read_raster(input_file_path)
+    # grid, dem, original_dem = preprocess_dem(input_file_path, options)
 
     sea = extract_sea(grid, dem, options)
     land_mask = (~sea.astype(bool)).astype(np.uint8)
@@ -18,30 +18,12 @@ def generate_sketch(input_file_path, options): # Given a DEM, extract the sea, t
     ridges = extract_ridges(grid, dem, land_mask, options)
 
     sketch = cv2.merge([sea, rivers, ridges]) # BGR
-    
-    return (sketch_id, original_dem, sketch)
 
-def preprocess_dem(input_file_path, options): # Downsample to the desired size, keeping the geospatial information
-    grid = Grid.from_raster(input_file_path)
-    original_raster = rasterio.open(input_file_path).read(1)
-
-    downsampled_dem = cv2.resize(original_raster, (options["dem_target_size"], options["dem_target_size"]), cv2.INTER_NEAREST)
-
-    new_view_finder = ViewFinder(
-        affine=grid.affine,
-        crs=grid.crs,
-        nodata=grid.nodata,
-        shape=downsampled_dem.shape
-    )
-    new_raster = Raster(downsampled_dem, new_view_finder)
-    grid.viewfinder = new_view_finder
-    return grid, new_raster, original_raster
+    return (sketch_id, dem, sketch)
 
 def extract_sea(grid, dem, options): # Simple mask to extract the area of elevation 0
     sea = np.zeros_like(dem, dtype=np.uint8)
     sea[dem <= 0] = 255
-    # sea = blur(sea, 3)
-    sea = cv2.resize(sea, (options["sketch_target_size"], options["sketch_target_size"]), cv2.INTER_NEAREST)
     return sea
 
 def extract_rivers(grid, dem, land_mask, options):
@@ -61,7 +43,6 @@ def extract_flow(grid, dem, land_mask, options): # Condition the DEM (resolving 
     flow_direction = grid.flowdir(conditioned_dem, dirmap=direction_map)
     accumulation = grid.accumulation(flow_direction, dirmap=direction_map)
 
-    flow = accumulation
     flow = np.log(accumulation + 1)
     flow = (flow - np.amin(flow)) / (np.amax(flow) - np.amin(flow))
     flow = np.array(flow * 255, dtype=np.uint8) # Normalize to [0,255]
@@ -76,7 +57,6 @@ def simplify(flow, options): # Accentuate everything and skeletonize it to 1 pix
 
     output = flow
     output = cv2.dilate(output, kernel=np.ones((10, 10), np.uint8), iterations=1) # Accentuate
-    output = cv2.resize(output, (options["sketch_target_size"], options["sketch_target_size"]), cv2.INTER_NEAREST) # Downsample
     output = (skeletonize(output)*225).astype('uint8') # Simplify
 
     return output
