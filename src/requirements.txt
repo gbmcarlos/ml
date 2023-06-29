@@ -1,0 +1,6 @@
+python-dotenv
+argparse
+requests
+pysheds
+tqdm
+torchvision
