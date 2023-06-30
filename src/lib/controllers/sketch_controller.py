@@ -11,24 +11,23 @@ def sketch_dem(parallel, input_path, flow_threshold, output_file):
     tile_file_paths = [f for f in pathlib.Path(input_path).glob('*.tif')]
 
     print(f'Sketching {len(tile_file_paths)} DEMs to {output_file} ' + ('parallelly' if parallel else 'sequentially'))
-    for i, tile_file_path in enumerate(tile_file_paths):
-        tile_file_path = str(tile_file_path)
-
-        if not parallel:
-            sketch_id, dem, sketch = sketch_service.generate_sketch(tile_file_path, flow_threshold)
+    if not parallel:
+        for i, tile_file_path in enumerate(tile_file_paths):
+            dem, sketch = sketch_service.generate_sketch(str(tile_file_path), flow_threshold)
             dems.append(dem)
             sketches.append(sketch)
 
-        else:
-            with concurrent.futures.ProcessPoolExecutor() as process_pool:
-                futures = []
-                for tile_file_path in tile_file_paths:
-                    tile_file_path = str(tile_file_path)
-                    futures.append(process_pool.submit(sketch_service.generate_sketch, tile_file_path, flow_threshold))
+    else:
+        with concurrent.futures.ThreadPoolExecutor() as process_pool:
+            futures = (process_pool.submit(
+                sketch_service.generate_sketch,
+                str(tile_file_path), flow_threshold,
+            ) for i, tile_file_path in enumerate(tile_file_paths))
 
-    if parallel:
-        for future in concurrent.futures.as_completed(futures):
-            future.result()
+            for future in concurrent.futures.as_completed(futures):
+                dem, sketch = future.result()
+                dems.append(dem)
+                sketches.append(sketch)
 
     training_input = np.array(sketches)
     training_output = np.array(dems)
