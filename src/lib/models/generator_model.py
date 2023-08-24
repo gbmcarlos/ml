@@ -2,6 +2,7 @@ import torch.nn as nn
 from .modules import ConvBlock, EncoderBlock, DecoderBlock
 
 
+# TODO compute output dimensions
 class Generator(nn.Module):
     def __init__(self, in_channels=3, out_channels=1):
         super().__init__()

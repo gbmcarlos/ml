@@ -28,6 +28,7 @@ def train_gan(settings):
 
     device = torch.device(settings['device_name'])
     print('Loading training data...')
+    # TODO transforms (toTensor, normalize)
     training_dataset = dataset_service.GanDataset(settings['training_data_folder'], settings['tile_filter_prefix'], settings['flow_threshold'])
     training_dataloader = DataLoader(training_dataset, batch_size=settings['batch_size'], shuffle=True)
     validation_dataset = dataset_service.GanDataset(settings['training_data_folder'], settings['tile_filter_prefix'], settings['flow_threshold'])
@@ -36,6 +37,7 @@ def train_gan(settings):
     discriminator = discriminator_model.Discriminator(channels=1).to(device)
     generator = generator_model.Generator(in_channels=3, out_channels=1).to(device)
 
+    # TODO separate LR
     disc_optimizer = optim.Adam(discriminator.parameters(), lr=settings['learning_rate'])
     gen_optimizer = optim.Adam(generator.parameters(), lr=settings['learning_rate'])
     bce_criterion = nn.BCELoss()

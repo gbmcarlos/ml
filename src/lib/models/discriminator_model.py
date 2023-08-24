@@ -14,7 +14,7 @@ class CNNBlock(nn.Module):
         out = self.relu(out)
         return out
 
-
+# TODO compute output dimensions
 class Discriminator(nn.Module):
     def __init__(self, channels):
         super().__init__()
