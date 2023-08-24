@@ -11,13 +11,13 @@ export APP_NAME ?= ${PROJECT_NAME}
 export KMP_WARNINGS=off
 
 download:
-	cd src; python3 entrypoint.py download @config/download.conf ${ARGS}
+	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output download
 
 sketch:
-	cd src; python3 entrypoint.py sketch @config/sketch.conf
+	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output sketch
 
 train:
-	cd src; python3 entrypoint.py train @config/train.conf
+	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output train
 
 command: build
 

@@ -1,47 +1,63 @@
 import argparse
 import lib.controllers as controllers
+import yaml, logging, os
 
 
 def run():
-    parser = argparse.ArgumentParser(fromfile_prefix_chars='@', description="Prepare, train and export a Terrain Generation model")
+
+    args = setup()
+    execute(args)
+
+    return
+
+def setup_arg_parser():
+
+    parser = argparse.ArgumentParser(description="Prepare, train and export a Terrain Generation model")
+    parser.add_argument('--settings-path', type=str, required=True)
+    parser.add_argument('--results-path', type=str, required=True)
     subparsers = parser.add_subparsers(help='download-dems help', dest='tool')
 
-    parser_download = subparsers.add_parser('download', help='Download DEM files from a list, and split them into a grid of smalled DEMs')
-    parser_download.add_argument("-p", "--parallel", action='store_true', help='Whether to execute in parallel (with multiple processes), instead of sequentially. Defaults to False')
-    parser_download.add_argument("-c", "--credentials-env-file", default='.env', help='File to read, as and env vars file, to extract the credentials for Earthdata')
-    parser_download.add_argument("-t", "--tiles-file", required=True, help='Path to a file containing a list of DEM file names to download from Earthdata')
-    parser_download.add_argument("-u", "--url-root", required=True, help='Base url to use as prefix for every DEM file')
-    parser_download.add_argument("-o", "--output-path", required=True, help='Output path where the result DEM files will be saved')
-    parser_download.add_argument("-s", "--tile-size", type=int, default=720, help='Square size of the downloaded DEM tiles')
-    parser_download.add_argument("-b", "--subtile-size", type=int, default=720, help='Square size to use to split the downloaded DEM into a grid of subtiles')
-    parser_download.add_argument("-l", "--land-coverage-threshold", type=float, default=0.2, help='Rate (between 0 and 1) to use as threshold to determine whether a subtile contains enough land to be considered valid')
+    subparsers.add_parser('download', help='Download DEM files from a list, and split them into a grid of smaller DEMs')
+    subparsers.add_parser('sketch', help='Generate high-level sketches of some DEM, and save the resulting collection of pairs')
+    subparsers.add_parser('train', help='Train the cGAN model and export it to TorchScript')
 
-    parser_sketch = subparsers.add_parser('sketch', help='Generate a high-level sketch of each DEM, and save the resulting collection of pairs')
-    parser_sketch.add_argument("-p", "--parallel", action='store_true', help='Whether to execute in parallel (with multiple processes), instead of sequentially. Defaults to False')
-    parser_sketch.add_argument("-i", "--input-path", required=True, help='Path where the input DEM can be found')
-    parser_sketch.add_argument("-f", "--flow-threshold", default=230, type=int, help='Binary threshold to use when computing flows (rivers and ridges)')
-    parser_sketch.add_argument("-o", "--output-file", required=True, help='Path and name of the file to save the pairs of DEMs and generated sketches, as a NPZ file')
+    return parser
 
-    parser_train = subparsers.add_parser('train', help='Train the cGAN model and export it to TorchScript')
-    parser_train.add_argument("-t", "--training-data-file", required=True, help='Path where the training data file can be found, to be loaded with numpy')
-    parser_train.add_argument("-b", "--batch-size", type=int, default=1, help='Number of samples for each batch')
-    parser_train.add_argument("-e", "--epochs", type=int, default=1, help='Number of epochs to train for')
-    parser_train.add_argument("-l", "--learning-rate", type=float, default=1e-2, help='Learning rate')
-    parser_train.add_argument("-d", "--device-name", default='cpu', help="pyTorch device name to use")
-    parser_train.add_argument("-s", "--shuffle", action='store_true', help='Whether to shuffle the samples when using the dataloader')
+def setup_logging(results_path):
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger = logging.getLogger()
+    logpath = os.path.join(results_path, 'results.log')
+    logger.addHandler(logging.FileHandler(logpath, '+a'))
+    logging.print = logger.info
 
-    args = parser.parse_args()
-    tool = args.tool
-    args = vars(args)
-    args.pop('tool')
+    os.makedirs(results_path, exist_ok=True)
 
-    if tool == 'download':
-        controllers.download(**args)
-    elif tool == 'sketch':
-        controllers.sketch(**args)
-    elif tool == 'train':
-        controllers.train_gan(**args)
+def setup():
 
+    arg_parser = setup_arg_parser()
+    args = arg_parser.parse_args()
+    # setup_logging(args.results_path)
+
+    return args
+
+def read_settings(settings_path):
+    try:
+        with open(settings_path) as file:
+            settings = yaml.load(file, Loader=yaml.FullLoader)
+            return settings
+    except Exception as e:
+        print(f"An error occurred while reading the settings file: {e}")
+
+def execute(args):
+    
+    settings = read_settings(args.settings_path)
+
+    if args.tool == 'download':
+        controllers.download(settings)
+    elif args.tool == 'sketch':
+        controllers.sketch(settings)
+    elif args.tool == 'train':
+        controllers.train(settings)
 
 if __name__ == '__main__':
     run()

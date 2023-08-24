@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+python-dotenv = "*"
+argparse = "*"
+requests = "*"
+rasterio = "*"
+numpy = "*"
+matplotlib = "*"
+pysheds = "*"
+opencv-python-headless = "*"
+torch = "*"
+torchvision = "*"
+pyyaml = "*"
+schema = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

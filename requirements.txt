@@ -1,9 +1,0 @@
-python-dotenv
-argparse
-requests
-rasterio
-numpy
-matplotlib
-pysheds
-opencv-python-headless
-pysheds
