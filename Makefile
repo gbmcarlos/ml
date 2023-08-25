@@ -19,6 +19,9 @@ sketch:
 train:
 	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output train
 
+test:
+	pipenv run python3 ${MODULE}
+
 command: build
 
 	docker run \
