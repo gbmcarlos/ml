@@ -6,8 +6,8 @@ import cv2
 from skimage.morphology import skeletonize
 
 
-def generate_sketch(input_file_path, flow_threshold):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
-    sketch_id = os.path.basename(input_file_path)
+def generate_sketch(input_file_path, flow_threshold, target_size):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
+    tile_id = os.path.basename(input_file_path)
 
     grid = Grid.from_raster(input_file_path)
     dem = grid.read_raster(input_file_path)
@@ -18,10 +18,12 @@ def generate_sketch(input_file_path, flow_threshold):  # Given a DEM, extract th
     ridges = extract_ridges(grid, dem, land_mask, flow_threshold)
 
     sketch = cv2.merge([sea, rivers, ridges])  # BGR
+    sketch = cv2.resize(sketch, (target_size, target_size))
+    dem = cv2.resize(dem, (target_size, target_size))
 
-    print(f"Sketched {sketch_id}")
+    print(f"Sketched {tile_id}")
 
-    return sketch, dem
+    return sketch, dem, tile_id
 
 
 def extract_sea(dem):  # Simple mask to extract the area of elevation 0

@@ -8,16 +8,17 @@ download:
   subtile_size: 720
   land_coverage_threshold: 0.5
 sketch:
-  input_path: data/earthdata_tiles
+  input_path: src/data/earthdata_tiles
   tile_filter_prefix: ASTGTMV003_N36
-  output_file: data/training_data.npz
+  output_folder: src/data/sketches
   flow_threshold: 230
+  target_size: 256
   parallel: false
 train:
   checkpoint_folder: src/data/checkpoints
   training_data_folder: src/data/earthdata_tiles
   examples_folder: src/data/examples
-  tile_filter_prefix: ASTGTMV003_N36E001
+  tile_filter_prefix: ASTGTMV003
   flow_threshold: 230
   batch_size: 1
   epochs: 1

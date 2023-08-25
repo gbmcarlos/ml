@@ -34,7 +34,7 @@ def train_gan(settings):
     validation_dataset = dataset_service.GanDataset(settings['training_data_folder'], settings['tile_filter_prefix'], settings['flow_threshold'])
     validation_dataloader = DataLoader(validation_dataset, batch_size=1, shuffle=False)
 
-    discriminator = discriminator_model.Discriminator(channels=1).to(device)
+    discriminator = discriminator_model.Discriminator(in_channels_x=3, in_channels_y=1).to(device)
     generator = generator_model.Generator(in_channels=3, out_channels=1).to(device)
 
     # TODO separate LR

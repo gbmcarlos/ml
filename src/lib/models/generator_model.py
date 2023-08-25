@@ -87,7 +87,7 @@ def test():
     print('x:', x.shape)
     model = Generator()
     pred = model(x)
-    print(pred.shape)
+    print('output:', pred.shape)
 
 if __name__ == "__main__":
     test()

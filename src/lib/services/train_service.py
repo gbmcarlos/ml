@@ -7,16 +7,16 @@ def train_gan(device, dataloader, discriminator, generator, disc_optimizer, gen_
 
     for _, (sample, target) in enumerate(dataloader):
 
-        sample = sample.to(device)
-        target = target.to(device)
+        sample = sample.to(device) # sketch
+        target = target.to(device) # real dem
 
         # Train the discriminator
         discriminator.train()
         disc_optimizer.zero_grad()
 
-        disc_pred_real = discriminator(target)
+        disc_pred_real = discriminator(sample, target)
         disc_loss_real = loss_fn(disc_pred_real, torch.ones_like(disc_pred_real))
-        disc_pred_fake = discriminator(generator(sample))
+        disc_pred_fake = discriminator(sample, generator(sample))
         disc_loss_fake = loss_fn(disc_pred_fake, torch.zeros_like(disc_pred_fake))
         disc_total_loss = disc_loss_fake + disc_loss_real
         
@@ -28,7 +28,7 @@ def train_gan(device, dataloader, discriminator, generator, disc_optimizer, gen_
         generator.train()
         gen_optimizer.zero_grad()
         
-        disc_pred_fake = discriminator(generator(sample))
+        disc_pred_fake = discriminator(sample, generator(sample))
         disc_loss_fake = loss_fn(disc_pred_fake, torch.ones_like(disc_pred_fake))
         
         disc_loss_fake.backward()
