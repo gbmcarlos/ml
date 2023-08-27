@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from schema import Schema
 import os
+import wandb
 
 from ..models import generator_model, discriminator_model
 from ..services import dataset_service, train_service, checkpoint_service
@@ -49,11 +50,23 @@ def train_gan(settings):
     checkpoint_service.load_checkpoint(generator, gen_optimizer, device, settings['learning_rate'], gen_checkpoint_path)
     checkpoint_service.load_checkpoint(discriminator, disc_optimizer, device, settings['learning_rate'], disc_checkpoint_path)
 
+    wandb.init(
+        project='terramorph',
+        config={
+            'tile_filter_prefix': settings['tile_filter_prefix'],
+            "batch_size": settings['batch_size'],
+            'epochs': settings['epochs'],
+            'learning_rate': settings['learning_rate'],
+            'device_name': settings['device_name']
+        }
+    )
+
     print(f"Training for {settings['epochs']} epochs")
     for index, epoch in enumerate(range(settings['epochs'])):
         train_service.train_gan(
             device, training_dataloader, discriminator, generator,
-            disc_optimizer, gen_optimizer, bce_criterion
+            disc_optimizer, gen_optimizer, bce_criterion,
+            5
         )
 
         print('Saving checkpoints')

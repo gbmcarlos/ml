@@ -3,7 +3,6 @@ import glob
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from .sketch_service import generate_sketch
 
 
 class GanDataset(Dataset):
@@ -19,10 +18,8 @@ class GanDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-        sketch, dem, tile_id = generate_sketch(self.data[index], self.flow_threshold, 256)
-        sample = torch.from_numpy(sketch).float()
-        sample = torch.permute(sample, (2, 0, 1))  # Channels first
-        target = torch.from_numpy(dem).float()
-        target = torch.unsqueeze(target, 0)
-
+        data = np.load(self.data[index])
+        sample = torch.from_numpy(data['sketch']).float()
+        target = torch.from_numpy(data['dem']).float()
+        
         return sample, target

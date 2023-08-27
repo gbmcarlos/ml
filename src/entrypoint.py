@@ -18,7 +18,6 @@ def setup_arg_parser():
     subparsers = parser.add_subparsers(help='download-dems help', dest='tool')
 
     subparsers.add_parser('download', help='Download DEM files from a list, and split them into a grid of smaller DEMs')
-    subparsers.add_parser('sketch', help='Generate high-level sketches of some DEM, and save the resulting collection of pairs')
     subparsers.add_parser('train', help='Train the cGAN model and export it to TorchScript')
 
     return parser
@@ -54,8 +53,6 @@ def execute(args):
 
     if args.tool == 'download':
         controllers.download(settings)
-    elif args.tool == 'sketch':
-        controllers.sketch(settings)
     elif args.tool == 'train':
         controllers.train(settings)
 
