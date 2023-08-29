@@ -40,7 +40,7 @@ def download_dems(settings):
     with requests.Session() as session:
         session.auth = (username, password)
 
-        print(f'Downloading {len(tile_file_names)} files to {settings["output_path"]} ' + ('parallelly' if settings["parallel"] else 'sequentially'))
+        print(f'Processing {len(tile_file_names)} tiles to {settings["output_path"]} ' + ('parallelly' if settings["parallel"] else 'sequentially'))
         if settings['parallel']:
             with concurrent.futures.ProcessPoolExecutor() as process_pool:
                 futures = (process_pool.submit(
