@@ -4,7 +4,7 @@ download:
   url_root: https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/ASTGTM.003/
   tile_filter_prefix: ASTGTMV003
   output_path: src/data/training
-  parallel: false
+  parallel: true
   tile_size: 3600
   subtile_size: 225
   land_coverage_threshold: 0.5
@@ -12,12 +12,12 @@ download:
   target_size: 256
 train:
   training_data_folder: src/data/training
-  tile_filter_prefix: ASTGTMV003_N36
+  tile_filter_prefix: ASTGTMV003
   device_name: mps
   visualization_frequency: 50
   hyper:
-    batch_size: 4
-    epochs: 10
-    gen_lr: 0.00001
-    disc_lr: 0.0005
-    l1_lambda: 100.
+	batch_size: 4
+	epochs: 10
+	gen_lr: 0.00001
+	disc_lr: 0.0005
+	l1_lambda: 100.
