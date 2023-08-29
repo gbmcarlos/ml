@@ -69,8 +69,11 @@ class Generator(nn.Module):
 		encoded_2 = self.encoder_block_2(encoded_1)
 		encoded_3 = self.encoder_block_3(encoded_2)
 		encoded_4 = self.encoder_block_4(encoded_3)
+		encoded_5 = self.encoder_block_5(encoded_4)
 
-		bottleneck = self.bottleneck_block(encoded_4)
+		print('encoded_5', encoded_5.shape)
+		bottleneck = self.bottleneck_block(encoded_5)
+		print('bottleneck', bottleneck.shape)
 
 		decoded_1 = self.decoder_block_1(bottleneck)
 		decoded_2 = self.decoder_block_2(torch.cat([decoded_1, encoded_4], dim=1))

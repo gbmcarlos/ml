@@ -5,7 +5,7 @@ from schema import Schema
 import os
 import wandb
 
-from ..models import generator_model_v1 as generator_model, discriminator_model_v1 as discriminator_model
+from ..models import generator_model_v2 as generator_model, discriminator_model_v2 as discriminator_model
 from ..services import dataset_service, train_service, checkpoint_service
 
 
@@ -22,6 +22,7 @@ def train_gan(settings):
 				'epochs': int,
 				'gen_lr': float,
 				'disc_lr': float,
+				'betas': list,
 				'l1_lambda': float
 			}
 		}
@@ -59,7 +60,7 @@ def train_gan(settings):
 		print(f"Starting epoch {epoch+1}")
 		train_service.train_gan(
 			device, training_dataloader, discriminator, generator,
-			hyper['gen_lr'], hyper['disc_lr'], hyper['l1_lambda'],
+			hyper['gen_lr'], hyper['disc_lr'], hyper['betas'], hyper['l1_lambda'],
 			visualization_frequency=settings['visualization_frequency']
 		)
 

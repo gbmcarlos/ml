@@ -7,11 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-def train_gan(device, training_dataloader, discriminator, generator, gen_lr, disc_lr, l1_lambda, visualization_frequency):
+def train_gan(device, training_dataloader, discriminator, generator, gen_lr, disc_lr, betas, l1_lambda, visualization_frequency):
 
 	bce = nn.BCELoss()
 	l1 = nn.L1Loss()
-	gen_optimizer = optim.Adam(generator.parameters(), lr=gen_lr)
+	gen_optimizer = optim.Adam(generator.parameters(), lr=gen_lr, betas=betas)
 	disc_optimizer = optim.SGD(discriminator.parameters(), lr=disc_lr)
 
 	generator.train()
@@ -55,7 +55,7 @@ def train_gan(device, training_dataloader, discriminator, generator, gen_lr, dis
 		if (step % visualization_frequency == 0):
 			print(f"Generating visulizations for training sample {step}")
 			visualize_example(fake.detach().cpu())
-			# visualize_activations(activations)
+			visualize_activations(activations)
 			# visualize_kernels(generator)
 			print("Back to training")
 
@@ -67,13 +67,16 @@ def visualize_example(examples):
 	wandb.log({f"inference": image})
 
 
-def visualize_activations(activations):
+def visualize_activations(activations, max_size=512):
 	# print("Visualizing activations...")
 	for index, activation in enumerate(activations):
 		n, c, h, w = activation.shape
-		tensor = activation.cpu().view(n*c, -1, h, w)
-		rows = int(math.sqrt(tensor.shape[0]))
-		grid = torchvision.utils.make_grid(tensor, nrow=rows, normalize=True, padding=1)
+		columns = int(max_size/w) # How many of these "images" we could fit side-to-side in a max_size width
+		size = int(min(columns*columns, n*c)) # Don't try to select more than available, even if they could fit
+		layers = activation.cpu().view(n*c, -1, h, w) # Unpack the channels, so a long list of images
+		indices = torch.randperm(n*c)[:size] # Get a shuffled list of indices and select as many as required
+		images = layers[indices]
+		grid = torchvision.utils.make_grid(images, nrow=columns, normalize=True, padding=1)
 		image = wandb.Image(grid)
 		wandb.log({f"activations/{index}": image})
 
