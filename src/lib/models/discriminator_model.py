@@ -29,7 +29,10 @@ class Discriminator(nn.Module):
         self.cnn_block_3 = CNNBlock(in_channels=128, out_channels=256) # (N, 128, 32, 32) -> (N, 256, 16, 16)
         self.cnn_block_4 = CNNBlock(in_channels=256, out_channels=512) # (N, 256, 16, 16) -> (N, 512, 8, 8)
 
-        self.final_block = nn.Conv2d(in_channels=512, out_channels=1, kernel_size=4, stride=1, padding=1, padding_mode='reflect') # (N, 512, 8, 8) -> (N, 1, 7, 7)
+        self.final_block = nn.Sequential(
+            nn.Conv2d(in_channels=512, out_channels=1, kernel_size=4, stride=1, padding=1, padding_mode='reflect'), # (N, 512, 8, 8) -> (N, 1, 7, 7)
+            nn.Sigmoid()
+        )
 
     def forward(self, x, y):
         out = torch.cat([x, y], dim=1) # Concatenate the input and the target, along the channels

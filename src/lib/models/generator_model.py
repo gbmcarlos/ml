@@ -79,8 +79,10 @@ class Generator(nn.Module):
         decoded_5 = self.decoder_block_5(torch.cat([decoded_4, encoded_1], dim=1))
 
         output = self.final_block(torch.cat([decoded_5, encoded_0], dim=1))
+
+        activations = [encoded_0.detach(), encoded_1.detach(), encoded_2.detach(), encoded_3.detach(), encoded_4.detach(), bottleneck.detach(), decoded_1.detach(), decoded_2.detach(), decoded_3.detach(), decoded_4.detach(), decoded_5.detach()]
         
-        return output
+        return output, activations
 
 def test():
     x = torch.randn((1, 3, 256, 256))

@@ -2,7 +2,7 @@ download:
   credentials_env_file: src/.env
   tiles_file: src/config/europe-dem-tiles.txt
   url_root: https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/ASTGTM.003/
-  tile_filter_prefix: ASTGTMV003_N36
+  tile_filter_prefix: ASTGTMV003
   output_path: src/data/training
   parallel: false
   tile_size: 3600
@@ -11,12 +11,13 @@ download:
   flow_threshold: 230
   target_size: 256
 train:
-  checkpoint_folder: src/data/checkpoints
-  training_data_folder: src/data/earthdata_tiles
+  training_data_folder: src/data/training
   tile_filter_prefix: ASTGTMV003_N36
-  examples_folder: src/data/examples
-  flow_threshold: 230
-  batch_size: 1
-  epochs: 1
-  learning_rate: 0.01
   device_name: mps
+  visualization_frequency: 50
+  hyper:
+    batch_size: 4
+    epochs: 10
+    gen_lr: 0.00001
+    disc_lr: 0.0005
+    l1_lambda: 100.

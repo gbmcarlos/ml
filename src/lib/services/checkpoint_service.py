@@ -1,6 +1,5 @@
 import os
 import torch
-from torchvision.utils import save_image
 
 
 def save_checkpoint(model, optimizer, output_file):
@@ -18,16 +17,3 @@ def load_checkpoint(model, optimizer, device, learning_rate, input_file):
 
         for param_group in optimizer.param_groups:
             param_group["lr"] = learning_rate
-
-def save_example(generator, dataloader, epoch, device, output_folder):
-
-    sample, target = next(iter(dataloader))
-    sample, target = sample.to(device), target.to(device)
-
-    generator.eval()
-    with torch.no_grad():
-        fake_target = generator(sample)
-        # fake_target = fake_target * 0.5 + 0.5  # remove normalization#
-        save_image(sample, output_folder + f"/sample_{epoch}.png")
-        save_image(fake_target, output_folder + f"/generated_{epoch}.png")
-    generator.train()

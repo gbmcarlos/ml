@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := command
-.PHONY: command download
+.PHONY: command download train
 
 MAKEFILE_PATH := $(abspath $(lastword ${MAKEFILE_LIST}))
 PROJECT_PATH := $(dir ${MAKEFILE_PATH})
@@ -11,13 +11,10 @@ export APP_NAME ?= ${PROJECT_NAME}
 export KMP_WARNINGS=off
 
 download:
-	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output download
-
-sketch:
-	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output sketch
+	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml download
 
 train:
-	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml --results-path output train
+	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml train
 
 test:
 	pipenv run python3 ${MODULE}
