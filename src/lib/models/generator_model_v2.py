@@ -8,38 +8,53 @@ class EncoderBlock(nn.Module):
 
 		self.conv = nn.Sequential(
 			nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=4, stride=2, padding=1, padding_mode='reflect', bias=False),
-			nn.BatchNorm2d(out_channels),
+			# nn.BatchNorm2d(out_channels),
 			nn.LeakyReLU(0.2)
 		)
 
 	def forward(self, x):
 		return self.conv(x)
 
+class AttentionGate(nn.Module):
+	def __init__(self, in_channels):
+		super().__init__()
+			
+		self.conv = nn.Sequential(
+			nn.Conv2d(in_channels=in_channels, out_channels=1, kernel_size=1, stride=1, padding=0, bias=False),
+			nn.Softmax(dim=1)
+		)
+
+	def forward(self, gating_signal, skip_connection):
+		attention = self.conv(torch.cat([gating_signal, skip_connection], dim=1))
+		output = attention * skip_connection
+		return output
+
 class DecoderBlock(nn.Module):
 	def __init__(self, in_channels, out_channels, dropout=0.0):
 		super().__init__()
 
+		# self.attention = AttentionGate(in_channels=in_channels)
 		self.conv = nn.Sequential(
 			nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(out_channels),
+			# nn.BatchNorm2d(out_channels),
 			nn.Dropout(dropout),
-			nn.ReLU(),
+			nn.ReLU()
 		)
 
 	def forward(self, x, y=None):
 		if y is not None:
+			# x = self.attention(x, y)
 			x = torch.cat([x, y], dim=1)
 		return self.conv(x)
 
-
 # Starting with x like (N, 3, 256, 256), output a z like (N, 1, 256, 256)
 class Generator(nn.Module):
-	def __init__(self, in_channels=3, out_channels=1):
+	def __init__(self, in_channels, out_channels):
 		super().__init__()
 
 		self.initial_block = nn.Sequential(
 			nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=4, stride=2, padding=1, padding_mode='reflect', bias=False),
-			nn.BatchNorm2d(64),
+			nn.BatchNorm2d(64)
 		) # initial: (N, in_channels, 256, 256) -> (N, 64, 128, 128)
 
 		self.encoder_block_1 = EncoderBlock(64, 128) # encoded_1: (N, 64, 128, 128)-> (N, 128, 64, 64)
@@ -50,11 +65,11 @@ class Generator(nn.Module):
 
 		self.bottleneck_block = nn.Sequential(
 			nn.Conv2d(in_channels=512, out_channels=512, kernel_size=4, stride=1, padding='same', padding_mode='reflect', bias=False),
-			nn.BatchNorm2d(512),
-		) # bottleneck: (N, 512, 4, 4) -> (N, 512, 4, 4) (=encoded_7 in pix2pix)
+			nn.BatchNorm2d(512)
+		) # bottleneck: (N, 512, 4, 4) -> (N, 1024, 4, 4) (=encoded_7 in pix2pix) (+noise)
 
-		self.decoder_block_1 = DecoderBlock(512, 512, 0.5) # decoded_1: (N, 512, 4, 4) -> (N, 512, 8, 8) (bottleneck+none) (=decoded_7 in pix2pix)
-		self.decoder_block_2 = DecoderBlock(512*2, 512, 0.5) # decoded_2: (N, 512*2, 8, 8) -> (N, 512, 16, 16) (decoded_1+encoded_4)
+		self.decoder_block_1 = DecoderBlock(512, 512) # decoded_1: (N, 1024, 4, 4) -> (N, 512, 8, 8) (bottleneck+none) (=decoded_7 in pix2pix)
+		self.decoder_block_2 = DecoderBlock(512*2, 512) # decoded_2: (N, 512*2, 8, 8) -> (N, 512, 16, 16) (decoded_1+encoded_4)
 		self.decoder_block_3 = DecoderBlock(512*2, 256) # decoded_3: (N, 512*2, 16, 16) -> (N, 256, 32, 32) (decoded_2+encoded_3)
 		self.decoder_block_4 = DecoderBlock(256*2, 128) # decoded_4: (N, 256*2, 32, 32) -> (N, 128, 64, 64) (decoded_3+encoded_2)
 		self.decoder_block_5 = DecoderBlock(128*2, 64) # decoded_5: (N, 128*2, 64, 64) -> (N, 64, 128, 128) (decoded_4+encoded_1)
@@ -75,6 +90,8 @@ class Generator(nn.Module):
 		encoded_5 = self.encoder_block_5(encoded_4)
 
 		bottleneck = self.bottleneck_block(encoded_5)
+		# noise = torch.rand(bottleneck.shape).to(bottleneck.device)
+		# bottleneck = torch.cat([bottleneck, noise], dim=1)
 
 		decoded_1 = self.decoder_block_1(bottleneck)
 		decoded_2 = self.decoder_block_2(decoded_1, encoded_4)
@@ -89,9 +106,9 @@ class Generator(nn.Module):
 		return output, activations
 
 def test():
-	x = torch.randn((1, 3, 256, 256))
+	x = torch.randn((1, 4, 256, 256))
 	print('x:', x.shape)
-	model = Generator()
+	model = Generator(in_channels=4, out_channels=1)
 	pred, _ = model(x)
 	print('output:', pred.shape)
 

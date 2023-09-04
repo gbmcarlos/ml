@@ -9,7 +9,9 @@ from skimage.morphology import skeletonize
 
 def generate_sketch(dem, flow_threshold):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
 
-	raster = Raster(dem)
+	resized_dem = cv2.resize(dem, (128, 128))
+
+	raster = Raster(resized_dem)
 	grid = Grid.from_raster(raster)
 
 	sea = extract_sea(raster)
@@ -17,6 +19,9 @@ def generate_sketch(dem, flow_threshold):  # Given a DEM, extract the sea, the r
 	rivers = extract_rivers(grid, raster, land_mask, flow_threshold)
 	ridges = extract_ridges(grid, raster, land_mask, flow_threshold)
 
+	sea = cv2.resize(sea, (256, 256))
+	rivers = simplify(cv2.resize(rivers, (256, 256)))
+	ridges = simplify(cv2.resize(ridges, (256, 256)))
 	sketch = np.stack([sea, rivers, ridges], axis=0)
 
 	return sketch
@@ -51,7 +56,6 @@ def extract_flow(grid, raster, land_mask, flow_threshold):  # Condition the DEM 
 	flow = np.array(flow * 255, dtype=np.uint8) # Normalize to [0,255]
 
 	_, flow = cv2.threshold(flow, flow_threshold, 255, cv2.THRESH_BINARY)
-	flow = simplify(flow)
 	flow *= land_mask
 
 	return flow

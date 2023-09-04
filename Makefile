@@ -14,7 +14,7 @@ download:
 	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml download
 
 train:
-	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml train
+	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml  --name '${D}' train
 
 test_model:
 	pipenv run python3 -m src.lib.models.${MODEL}

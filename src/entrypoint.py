@@ -1,7 +1,6 @@
 import argparse
 import lib.controllers as controllers
-import yaml, logging, os
-
+import yaml
 
 def run():
 
@@ -14,6 +13,7 @@ def setup_arg_parser():
 
 	parser = argparse.ArgumentParser(description="Prepare, train and export a Terrain Generation model")
 	parser.add_argument('--settings-path', type=str, required=True)
+	parser.add_argument('--name', type=str, required=False)
 	subparsers = parser.add_subparsers(dest='tool')
 
 	subparsers.add_parser('download', help='Download DEM files from a list, and split them into a grid of smaller DEMs')
@@ -39,6 +39,7 @@ def read_settings(settings_path):
 def execute(args):
 	
 	settings = read_settings(args.settings_path)
+	settings['name'] = args.name
 
 	if args.tool == 'download':
 		controllers.download(settings)

@@ -17,6 +17,7 @@ torchvision = "*"
 pyyaml = "*"
 schema = "*"
 wandb = "*"
+torchgan = "*"
 
 [dev-packages]
 
