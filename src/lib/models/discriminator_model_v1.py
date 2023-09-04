@@ -49,27 +49,6 @@ class Discriminator(nn.Module):
 		# activations = [initial.detach(), conv_1.detach(), conv_2.detach(), conv_3.detach()]
 
 		return out
-	
-def gradient_penalty(critic, sample, target, fake, device="cpu"):
-	N, C, H, W = target.shape
-	alpha = torch.rand((N, 1, 1, 1)).repeat(1, C, H, W).to(device)
-	interpolated_images = target * alpha + fake * (1 - alpha)
-
-    # Calculate critic scores
-	mixed_scores = critic(sample, interpolated_images)
-
-    # Take the gradient of the scores with respect to the images
-	gradient = torch.autograd.grad(
-		inputs=interpolated_images,
-        outputs=mixed_scores,
-        grad_outputs=torch.ones_like(mixed_scores),
-        create_graph=True,
-        retain_graph=True,
-    )[0]
-	gradient = gradient.view(gradient.shape[0], -1)
-	gradient_norm = gradient.norm(2, dim=1)
-	gradient_penalty = torch.mean((gradient_norm - 1) ** 2)
-	return gradient_penalty
 
 def test():
 	x = torch.randn((1, 3, 256, 256))

@@ -10,7 +10,8 @@ class WGanTrainer():
 		self.dataloder = dataloader
 		self.hyperparameters = hyperparameters
 		self.gen_optimizer = torch.optim.Adam(self.generator.parameters(), lr=self.hyperparameters['gen_lr'], betas=self.hyperparameters['betas'])
-		self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.hyperparameters['critic_lr'], betas=self.hyperparameters['betas'])
+		self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.hyperparameters['critic_lr'], betas=(0.0, 0.9))
+		self.l1 = torch.nn.L1Loss()
 		self.visualization_frequency = visualization_frequency
 		self.dry_run = dry_run
 		self.stopped = False
@@ -56,27 +57,30 @@ class WGanTrainer():
 			fake, _ = self.generator(sample)
 			critic_pred_real = self.critic(sample, target).reshape(-1)
 			critic_pred_fake = self.critic(sample, fake).reshape(-1)
-			gp = self.gradient_penalty(sample, target, fake) * self.hyperparameters['gp_lambda']
-			w_distance = torch.mean(critic_pred_real) - torch.mean(critic_pred_fake)
-			critic_loss = (
-				- w_distance # Optimizers minimize, but we want to maximize, so negative
-				+ gp
+			critic_loss_gp = self.gradient_penalty(sample, target, fake) * self.hyperparameters['gp_lambda']
+			critic_loss_w_distance = torch.mean(critic_pred_real) - torch.mean(critic_pred_fake)
+			critic_loss_total = (
+				- critic_loss_w_distance # Optimizers minimize, but we want to maximize, so negative
+				+ critic_loss_gp
 			)
 			self.critic.zero_grad()
-			critic_loss.backward(retain_graph=True)
+			critic_loss_total.backward(retain_graph=True)
 			self.critic_optimizer.step()
 
 		critic_pred_generated = self.critic(sample, fake).reshape(-1)
-		gen_loss = -torch.mean(critic_pred_generated)
+		gen_loss_w = -torch.mean(critic_pred_generated)
+		gen_loss_l1 = self.l1(fake, target) * self.hyperparameters['l1_lambda']
+		gen_loss_total = gen_loss_w + gen_loss_l1
 		self.generator.zero_grad()
-		gen_loss.backward()
+		gen_loss_total.backward()
 		self.gen_optimizer.step()
 
 		if not self.dry_run:
 			wandb.log({
-				'loss/critic_w': w_distance,
-				'loss/critic_gp': gp,
-				'loss/gen': gen_loss
+				'loss/critic_w': critic_loss_w_distance,
+				'loss/critic_gp': critic_loss_gp,
+				'loss/gen_w': gen_loss_w,
+				'loss/gen_l1': gen_loss_l1
 			})
 
 		if (step % self.visualization_frequency == 0):

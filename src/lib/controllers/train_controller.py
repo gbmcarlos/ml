@@ -25,6 +25,7 @@ def train_gan(settings):
 				'gen_lr': float,
 				'critic_lr': float,
 				'betas': list,
+				'l1_lambda': int,
 				'gp_lambda': int,
 				'critic_iter': int
 			}
@@ -51,8 +52,7 @@ def train_gan(settings):
 
 	trainer = WGanTrainer(
 		device, generator, critic, training_dataloader, 
-		hyper, settings['visualization_frequency'],
-		True
+		hyper, settings['visualization_frequency']
 	)
 	trainer.run(name)
 
