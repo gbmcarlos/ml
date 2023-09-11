@@ -6,7 +6,8 @@ import os
 import wandb
 import sys, signal
 
-from ..services.WGanTrainer import WGanTrainer
+from ..trainers.WGanTrainer import WGanTrainer
+from ..trainers.GGanTrainer import GGanTrainer
 from ..models import generator_model_v1 as generator_model, discriminator_model_v1 as discriminator_model
 from ..services import dataset_service
 
@@ -51,9 +52,16 @@ def train_gan(settings):
 	generator_model.initialize_weights(critic)
 
 	trainer = WGanTrainer(
-		device, generator, critic, training_dataloader, 
-		hyper, settings['visualization_frequency']
+		generator, critic,
+		"src/data/checkpoints", hyper, device, training_dataloader, settings['visualization_frequency'], 
+		# True
 	)
+	# trainer = GGanTrainer(
+		# generator_1, generator_2, discriminator,
+		# "src/data/checkpoints", hyper, device, training_dataloader, settings['visualization_frequency'],
+		# True
+	# )
+
 	trainer.run(name)
 
 	return

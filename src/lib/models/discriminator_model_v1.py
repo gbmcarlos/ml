@@ -7,7 +7,7 @@ class CNNBlock(nn.Module):
 		super().__init__()
 		self.conv = nn.Sequential(
 			nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=4, stride=2, padding=1, padding_mode='reflect', bias=False),
-			nn.InstanceNorm2d(out_channels, affine=True),
+			nn.InstanceNorm2d(out_channels),
 			nn.LeakyReLU(0.2)
 		)
 
@@ -20,11 +20,12 @@ class Discriminator(nn.Module):
 	def __init__(self, in_channels_x, in_channels_y):
 		super().__init__()
 
-		self.initial_block = nn.Sequential(
-			nn.Conv2d(in_channels_x + in_channels_y, 64, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2),
-		) # initial: (N, in_channels_x + in_channels_y, 256, 256) -> (N, 64, 128, 128)
+		# self.initial_block = nn.Sequential(
+		# 	nn.Conv2d(in_channels_x + in_channels_y, 64, kernel_size=4, stride=2, padding=1),
+        #     nn.LeakyReLU(0.2),
+		# ) # initial: (N, in_channels_x + in_channels_y, 256, 256) -> (N, 64, 128, 128)
 
+		self.initial_block = CNNBlock(in_channels=in_channels_x + in_channels_y, out_channels=64)
 		self.cnn_block_1 = CNNBlock(in_channels=64, out_channels=128) # (N, 64, 128, 128) -> (N, 128, 64, 64)
 		self.cnn_block_2 = CNNBlock(in_channels=128, out_channels=256) # (N, 128, 64, 64) -> (N, 256, 32, 32)
 		self.cnn_block_3 = CNNBlock(in_channels=256, out_channels=512) # (N, 256, 32, 32) -> (N, 512, 16, 16)
@@ -33,6 +34,7 @@ class Discriminator(nn.Module):
 
 		self.final_block = nn.Sequential(
 			nn.Conv2d(512, 1, kernel_size=4, stride=2, padding=0),
+			# nn.Sigmoid()
 		) # (N, 512, 8, 8) -> (N, 1, 1, 1)
 
 	def forward(self, x, y):

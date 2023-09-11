@@ -14,13 +14,13 @@ train:
   training_data_folder: src/data/training
   tile_filter_prefix: ASTGTMV003
   device_name: mps
-  visualization_frequency: 20
+  visualization_frequency: 5
   hyper:
-    batch_size: 4
+    batch_size: 1
     epochs: 10
-    gen_lr: 0.0005
-    critic_lr: 0.0001
-    betas: [0.5, 0.9]
+    gen_lr: 0.0002
+    critic_lr: 0.0002
+    betas: [0.0, 0.9]
     l1_lambda: 100
     gp_lambda: 10
     critic_iter: 5

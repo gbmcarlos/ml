@@ -7,24 +7,25 @@ class EncoderBlock(nn.Module):
 		super().__init__()
 
 		self.conv = nn.Sequential(
-			nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding='same', padding_mode='reflect', bias=True),
+			nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=4, stride=2, padding=1, padding_mode='reflect', bias=True),
 			nn.BatchNorm2d(out_channels),
-			nn.LeakyReLU(0.2),
-			nn.MaxPool2d(kernel_size=2, stride=2)
+			nn.ReLU(True),
+			# nn.MaxPool2d(kernel_size=2, stride=2)
 		)
 
 	def forward(self, x):
 		return self.conv(x)
 
 class DecoderBlock(nn.Module):
-	def __init__(self, in_channels, out_channels):
+	def __init__(self, in_channels, out_channels, dropout=0.0):
 		super().__init__()
 
 		self.conv = nn.Sequential(
-			nn.Upsample(scale_factor=2, mode='bilinear'),
-			nn.Conv2d(in_channels=in_channels*2, out_channels=out_channels, kernel_size=3, stride=1, padding='same', padding_mode='reflect', bias=True),
+			# nn.Upsample(scale_factor=2, mode='bilinear'),
+			nn.ConvTranspose2d(in_channels=in_channels*2, out_channels=out_channels, kernel_size=4, stride=2, padding=1, bias=True),
 			nn.BatchNorm2d(out_channels),
-			nn.LeakyReLU(0.2)
+			nn.Dropout(dropout),
+			nn.ReLU(True)
 		)
 
 	def forward(self, x, y):
@@ -44,17 +45,17 @@ class Generator(nn.Module):
 
 		self.bottleneck_block = nn.Sequential(
 			nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=3, stride=1, padding='same', padding_mode='reflect'),
-			nn.LeakyReLU(0.2)
+			nn.ReLU(True)
 		) # bottleneck: (N, 1024, 8, 8) -> (N, 1024, 8, 8)
 
-		self.decoder_block_1 = DecoderBlock(1024, 512) # decoded_1: (N, 1024*2, 8, 8) -> (N, 512, 16, 16) (bottleneck+encoded_4)
-		self.decoder_block_2 = DecoderBlock(512, 256) # decoded_2: (N, 512*2, 16, 16) -> (N, 256, 32, 32) (decoded_1+encoded_3)
+		self.decoder_block_1 = DecoderBlock(1024, 512, 0.5) # decoded_1: (N, 1024*2, 8, 8) -> (N, 512, 16, 16) (bottleneck+encoded_4)
+		self.decoder_block_2 = DecoderBlock(512, 256, 0.5) # decoded_2: (N, 512*2, 16, 16) -> (N, 256, 32, 32) (decoded_1+encoded_3)
 		self.decoder_block_3 = DecoderBlock(256, 128) # decoded_3: (N, 256*2, 32, 32) -> (N, 128, 64, 64) (decoded_2+encoded_2)
 		self.decoder_block_4 = DecoderBlock(128, 64) # decoded_4: (N, 128*2, 64, 64) -> (N, 64, 128, 128) (decoded_3+encoded_1)
 
 		self.final_block = nn.Sequential(
-			nn.Upsample(scale_factor=2, mode='nearest'),
-			nn.Conv2d(in_channels=64*2, out_channels=out_channels, kernel_size=3, stride=1, padding='same', padding_mode='reflect'),
+			# nn.Upsample(scale_factor=2, mode='nearest'),
+			nn.ConvTranspose2d(in_channels=64*2, out_channels=out_channels, kernel_size=4, stride=2, padding=1, bias=True),
 			nn.Tanh()
 		) # (N, 64*2, 128, 128) -> (N, out_channels, 256, 256) (decoded_4+initial)
 
