@@ -21,8 +21,8 @@ class DecoderBlock(nn.Module):
 		super().__init__()
 
 		self.conv = nn.Sequential(
-			# nn.Upsample(scale_factor=2, mode='bilinear'),
-			nn.ConvTranspose2d(in_channels=in_channels*2, out_channels=out_channels, kernel_size=4, stride=2, padding=1, bias=True),
+			nn.Upsample(scale_factor=2, mode='nearest'),
+			nn.Conv2d(in_channels=in_channels*2, out_channels=out_channels, kernel_size=3, stride=1, padding='same', bias=True),
 			nn.BatchNorm2d(out_channels),
 			nn.Dropout(dropout),
 			nn.ReLU(True)
@@ -54,8 +54,8 @@ class Generator(nn.Module):
 		self.decoder_block_4 = DecoderBlock(128, 64) # decoded_4: (N, 128*2, 64, 64) -> (N, 64, 128, 128) (decoded_3+encoded_1)
 
 		self.final_block = nn.Sequential(
-			# nn.Upsample(scale_factor=2, mode='nearest'),
-			nn.ConvTranspose2d(in_channels=64*2, out_channels=out_channels, kernel_size=4, stride=2, padding=1, bias=True),
+			nn.Upsample(scale_factor=2, mode='nearest'),
+			nn.Conv2d(in_channels=64*2, out_channels=out_channels, kernel_size=3, stride=1, padding='same', bias=True),
 			nn.Tanh()
 		) # (N, 64*2, 128, 128) -> (N, out_channels, 256, 256) (decoded_4+initial)
 
