@@ -1,20 +1,18 @@
 download:
   credentials_env_file: src/.env
-  tiles_file: src/config/europe-dem-tiles.txt
+  tiles_file: src/config/pyreenes.txt
   url_root: https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/ASTGTM.003/
-  tile_filter_prefix: ASTGTMV003
-  output_path: src/data/training
-  parallel: false
+  output_path: src/data/training/pyreenes
   tile_size: 3600
   subtile_size: 225
   land_coverage_threshold: 0.5
   flow_threshold: 230
   target_size: 256
 train:
-  training_data_folder: src/data/training
+  training_data_folder: src/data/training/pyreenes
   tile_filter_prefix: ASTGTMV003
   device_name: mps
-  visualization_frequency: 5
+  visualization_frequency: 15
   hyper:
     batch_size: 1
     epochs: 10
@@ -22,5 +20,5 @@ train:
     critic_lr: 0.0002
     betas: [0.0, 0.9]
     l1_lambda: 100
-    gp_lambda: 10
+    gp_lambda: 100
     critic_iter: 5

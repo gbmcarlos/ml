@@ -11,10 +11,10 @@ export APP_NAME ?= ${PROJECT_NAME}
 export KMP_WARNINGS=off
 
 download:
-	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml download
+	pipenv run python3 src/download.py --settings-path src/config/settings.yaml
 
 train:
-	pipenv run python3 src/entrypoint.py --settings-path src/config/settings.yaml  --name '${D}' train
+	pipenv run python3 src/train.py --settings-path src/config/settings.yaml  --name '${N}'
 
 test_model:
 	pipenv run python3 -m src.lib.models.${MODEL}
