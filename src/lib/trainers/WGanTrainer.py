@@ -23,12 +23,12 @@ class WGanTrainer(BaseGanTrainer):
 
 			critic_pred_real = self.critic(sample, target).reshape(-1)
 			critic_pred_fake = self.critic(sample, fake).reshape(-1)
-			critic_loss_real = -critic_pred_real.mean() # Maximize the mean for real
-			critic_loss_fake = critic_pred_fake.mean() # Minimize the mean for fake
+			critic_loss_real = critic_pred_real.mean()
+			critic_loss_fake = critic_pred_fake.mean()
 			critic_loss_gp = self.gradient_penalty(sample, target, fake) * self.hyperparameters['gp_lambda']
 			critic_loss_total = (
-				critic_loss_real
-				+critic_loss_fake
+				-critic_loss_real # Maximize the mean for real
+				+critic_loss_fake # Minimize the mean for fake
 				+critic_loss_gp
 			)
 			self.critic.zero_grad()
@@ -36,11 +36,14 @@ class WGanTrainer(BaseGanTrainer):
 			self.critic_optimizer.step()
 		
 		critic_pred_generated = self.critic(sample, fake).reshape(-1)
-		gen_loss_fake = -torch.mean(critic_pred_generated) # Maximize the mean for fake
+		gen_loss_fake = torch.mean(critic_pred_generated)
 		# gen_loss_l1 = self.l1(fake, target) * self.hyperparameters['l1_lambda']
-		# gen_loss_total = gen_loss_w
+		gen_loss_total = (
+			-gen_loss_fake # Maximize the mean for fake
+			# +gen_loss_l1
+		)
 		self.generator.zero_grad()
-		gen_loss_fake.backward()
+		gen_loss_total.backward()
 		self.gen_optimizer.step()
 
 		self.wandb_log({
@@ -93,5 +96,7 @@ class WGanTrainer(BaseGanTrainer):
 		)[0]
 		gradient = gradient.view(gradient.shape[0], -1)
 		gradient_norm = gradient.norm(2, dim=1)
-		gradient_penalty = torch.mean((gradient_norm - 1) ** 2)
-		return gradient_penalty
+		# penalty = torch.mean((gradient_norm - 1) ** 2)
+		# Lipschitz Penalty
+		penalty = (torch.clamp(gradient_norm - 1., min=0, max=None) ** 2).mean()
+		return penalty

@@ -42,22 +42,24 @@ class Generator(nn.Module):
 		self.encoder_block_2 = EncoderBlock(128, 256) # encoded_2: (N, 128, 64, 64) -> (N, 256, 32, 32)
 		self.encoder_block_3 = EncoderBlock(256, 512) # encoded_3: (N, 256, 32, 32) -> (N, 512, 16, 16)
 		self.encoder_block_4 = EncoderBlock(512, 1024) # encoded_4: (N, 512, 16, 16) -> (N, 1024, 8, 8)
+		# self.encoder_block_5 = EncoderBlock(1024, 2048) # encoded_5: (N, 1024, 8, 8) -> (N, 2048, 4, 4)
 
 		self.bottleneck_block = nn.Sequential(
 			nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=3, stride=1, padding='same', padding_mode='reflect'),
 			nn.ReLU(True)
-		) # bottleneck: (N, 1024, 8, 8) -> (N, 1024, 8, 8)
+		) # bottleneck: (N, 2048, 4, 4) -> (N, 2048, 4, 4)
 
-		self.decoder_block_1 = DecoderBlock(1024, 512, 0.5) # decoded_1: (N, 1024*2, 8, 8) -> (N, 512, 16, 16) (bottleneck+encoded_4)
-		self.decoder_block_2 = DecoderBlock(512, 256, 0.5) # decoded_2: (N, 512*2, 16, 16) -> (N, 256, 32, 32) (decoded_1+encoded_3)
-		self.decoder_block_3 = DecoderBlock(256, 128) # decoded_3: (N, 256*2, 32, 32) -> (N, 128, 64, 64) (decoded_2+encoded_2)
-		self.decoder_block_4 = DecoderBlock(128, 64) # decoded_4: (N, 128*2, 64, 64) -> (N, 64, 128, 128) (decoded_3+encoded_1)
+		# self.decoder_block_5 = DecoderBlock(2048, 1024) # decoded_5: (N, 2048*2, 4, 4) -> (N, 1024, 8, 8) (bottleneck+encoded_5)
+		self.decoder_block_4 = DecoderBlock(1024, 512, 0.5) # decoded_4: (N, 1024*2, 8, 8) -> (N, 512, 16, 16) (decoded_5+encoded_4)
+		self.decoder_block_3 = DecoderBlock(512, 256, 0.5) # decoded_3: (N, 512*2, 16, 16) -> (N, 256, 32, 32) (decoded_4+encoded_3)
+		self.decoder_block_2 = DecoderBlock(256, 128, 0.5) # decoded_2: (N, 256*2, 32, 32) -> (N, 128, 64, 64) (decoded_3+encoded_2)
+		self.decoder_block_1 = DecoderBlock(128, 64) # decoded_1: (N, 128*2, 64, 64) -> (N, 64, 128, 128) (decoded_2+encoded_1)
 
 		self.final_block = nn.Sequential(
 			nn.Upsample(scale_factor=2, mode='nearest'),
 			nn.Conv2d(in_channels=64*2, out_channels=out_channels, kernel_size=3, stride=1, padding='same', bias=True),
 			nn.Tanh()
-		) # (N, 64*2, 128, 128) -> (N, out_channels, 256, 256) (decoded_4+initial)
+		) # (N, 64*2, 128, 128) -> (N, out_channels, 256, 256) (decoded_1+initial)
 
 	def forward(self, x):
 
@@ -66,15 +68,17 @@ class Generator(nn.Module):
 		encoded_2 = self.encoder_block_2(encoded_1)
 		encoded_3 = self.encoder_block_3(encoded_2)
 		encoded_4 = self.encoder_block_4(encoded_3)
+		# encoded_5 = self.encoder_block_5(encoded_4)
 
 		bottleneck = self.bottleneck_block(encoded_4)
 
-		decoded_1 = self.decoder_block_1(bottleneck, encoded_4)
-		decoded_2 = self.decoder_block_2(decoded_1, encoded_3)
-		decoded_3 = self.decoder_block_3(decoded_2, encoded_2)
-		decoded_4 = self.decoder_block_4(decoded_3, encoded_1)
+		# decoded_5 = self.decoder_block_5(bottleneck, encoded_5)
+		decoded_4 = self.decoder_block_4(bottleneck, encoded_4)
+		decoded_3 = self.decoder_block_3(decoded_4, encoded_3)
+		decoded_2 = self.decoder_block_2(decoded_3, encoded_2)
+		decoded_1 = self.decoder_block_1(decoded_2, encoded_1)
 
-		output = self.final_block(torch.cat([decoded_4, initial], dim=1))
+		output = self.final_block(torch.cat([decoded_1, initial], dim=1))
 
 		activations = [initial.detach(), encoded_1.detach(), encoded_2.detach(), encoded_3.detach(), encoded_4.detach(), bottleneck.detach(), decoded_1.detach(), decoded_2.detach(), decoded_3.detach(), decoded_4.detach()]
 		

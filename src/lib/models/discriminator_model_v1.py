@@ -15,27 +15,21 @@ class CNNBlock(nn.Module):
 		return self.conv(x)
 
 
-# Starting with x like (N, 3, 256, 256) and y like (N, 1, 256, 256), output a z like (N, 1, 7, 7)
 class Discriminator(nn.Module):
 	def __init__(self, in_channels_x, in_channels_y):
 		super().__init__()
 
-		# self.initial_block = nn.Sequential(
-		# 	nn.Conv2d(in_channels_x + in_channels_y, 64, kernel_size=4, stride=2, padding=1),
-        #     nn.LeakyReLU(0.2),
-		# ) # initial: (N, in_channels_x + in_channels_y, 256, 256) -> (N, 64, 128, 128)
-
-		self.initial_block = CNNBlock(in_channels=in_channels_x + in_channels_y, out_channels=64)
+		self.initial_block = CNNBlock(in_channels=in_channels_x + in_channels_y, out_channels=64) # initial: (N, in_channels_x + in_channels_y, 256, 256) -> (N, 64, 128, 128)
 		self.cnn_block_1 = CNNBlock(in_channels=64, out_channels=128) # (N, 64, 128, 128) -> (N, 128, 64, 64)
 		self.cnn_block_2 = CNNBlock(in_channels=128, out_channels=256) # (N, 128, 64, 64) -> (N, 256, 32, 32)
 		self.cnn_block_3 = CNNBlock(in_channels=256, out_channels=512) # (N, 256, 32, 32) -> (N, 512, 16, 16)
-		self.cnn_block_4 = CNNBlock(in_channels=512, out_channels=512) # (N, 512, 16, 16) -> (N, 512, 8, 8)
-		self.cnn_block_5 = CNNBlock(in_channels=512, out_channels=512) # (N, 512, 8, 8) -> (N, 512, 4, 4)
+		self.cnn_block_4 = CNNBlock(in_channels=512, out_channels=1024) # (N, 512, 16, 16) -> (N, 1024, 8, 8)
+		self.cnn_block_5 = CNNBlock(in_channels=1024, out_channels=2048) # (N, 1024, 8, 8) -> (N, 2048, 4, 4)
 
 		self.final_block = nn.Sequential(
-			nn.Conv2d(512, 1, kernel_size=4, stride=2, padding=0),
-			# nn.Sigmoid()
-		) # (N, 512, 8, 8) -> (N, 1, 1, 1)
+			nn.Conv2d(2048, 1, kernel_size=4, stride=2, padding=0), # (N, 2048, 4, 4) -> (N, 1, 1, 1)
+			nn.Flatten(1), # (N, 1, 1, 1) -> (N, 1)
+		)
 
 	def forward(self, x, y):
 		out = torch.cat([x, y], dim=1) # Concatenate the input and the target, along the channels
