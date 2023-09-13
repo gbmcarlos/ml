@@ -1,15 +1,15 @@
 download:
   credentials_env_file: src/.env
-  tiles_file: src/config/pyreenes.txt
+  tiles_file: src/config/mountains.txt
   url_root: https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/ASTGTM.003/
-  output_path: src/data/training/pyreenes
+  output_path: src/data/training/mountains
   tile_size: 3600
   subtile_size: 225
   land_coverage_threshold: 0.5
   flow_threshold: 230
   target_size: 256
 train:
-  training_data_folder: src/data/training/pyreenes
+  training_data_folder: src/data/training/mountains
   tile_filter_prefix: ASTGTMV003
   device_name: mps
   visualization_frequency: 15
