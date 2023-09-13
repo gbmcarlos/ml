@@ -37,10 +37,10 @@ class WGanTrainer(BaseGanTrainer):
 		
 		critic_pred_generated = self.critic(sample, fake).reshape(-1)
 		gen_loss_fake = torch.mean(critic_pred_generated)
-		# gen_loss_l1 = self.l1(fake, target) * self.hyperparameters['l1_lambda']
+		gen_loss_l1 = self.l1(fake, target) * self.hyperparameters['l1_lambda']
 		gen_loss_total = (
 			-gen_loss_fake # Maximize the mean for fake
-			# +gen_loss_l1
+			+gen_loss_l1
 		)
 		self.generator.zero_grad()
 		gen_loss_total.backward()
@@ -51,7 +51,7 @@ class WGanTrainer(BaseGanTrainer):
 			'loss/critic_fake': critic_loss_fake,
 			'loss/critic_gp': critic_loss_gp,
 			'loss/gen_fake': gen_loss_fake,
-			# 'loss/gen_l1': gen_loss_l1
+			'loss/gen_l1': gen_loss_l1
 		})
 
 		if (step % self.visualization_frequency == 0):

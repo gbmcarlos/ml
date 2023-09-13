@@ -42,14 +42,14 @@ class Generator(nn.Module):
 		self.encoder_block_2 = EncoderBlock(128, 256) # encoded_2: (N, 128, 64, 64) -> (N, 256, 32, 32)
 		self.encoder_block_3 = EncoderBlock(256, 512) # encoded_3: (N, 256, 32, 32) -> (N, 512, 16, 16)
 		self.encoder_block_4 = EncoderBlock(512, 1024) # encoded_4: (N, 512, 16, 16) -> (N, 1024, 8, 8)
-		# self.encoder_block_5 = EncoderBlock(1024, 2048) # encoded_5: (N, 1024, 8, 8) -> (N, 2048, 4, 4)
+		self.encoder_block_5 = EncoderBlock(1024, 2048) # encoded_5: (N, 1024, 8, 8) -> (N, 2048, 4, 4)
 
 		self.bottleneck_block = nn.Sequential(
-			nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=3, stride=1, padding='same', padding_mode='reflect'),
+			nn.Conv2d(in_channels=2048, out_channels=2048, kernel_size=3, stride=1, padding='same', padding_mode='reflect'),
 			nn.ReLU(True)
 		) # bottleneck: (N, 2048, 4, 4) -> (N, 2048, 4, 4)
 
-		# self.decoder_block_5 = DecoderBlock(2048, 1024) # decoded_5: (N, 2048*2, 4, 4) -> (N, 1024, 8, 8) (bottleneck+encoded_5)
+		self.decoder_block_5 = DecoderBlock(2048, 1024) # decoded_5: (N, 2048*2, 4, 4) -> (N, 1024, 8, 8) (bottleneck+encoded_5)
 		self.decoder_block_4 = DecoderBlock(1024, 512, 0.5) # decoded_4: (N, 1024*2, 8, 8) -> (N, 512, 16, 16) (decoded_5+encoded_4)
 		self.decoder_block_3 = DecoderBlock(512, 256, 0.5) # decoded_3: (N, 512*2, 16, 16) -> (N, 256, 32, 32) (decoded_4+encoded_3)
 		self.decoder_block_2 = DecoderBlock(256, 128, 0.5) # decoded_2: (N, 256*2, 32, 32) -> (N, 128, 64, 64) (decoded_3+encoded_2)
@@ -68,12 +68,12 @@ class Generator(nn.Module):
 		encoded_2 = self.encoder_block_2(encoded_1)
 		encoded_3 = self.encoder_block_3(encoded_2)
 		encoded_4 = self.encoder_block_4(encoded_3)
-		# encoded_5 = self.encoder_block_5(encoded_4)
+		encoded_5 = self.encoder_block_5(encoded_4)
 
-		bottleneck = self.bottleneck_block(encoded_4)
+		bottleneck = self.bottleneck_block(encoded_5)
 
-		# decoded_5 = self.decoder_block_5(bottleneck, encoded_5)
-		decoded_4 = self.decoder_block_4(bottleneck, encoded_4)
+		decoded_5 = self.decoder_block_5(bottleneck, encoded_5)
+		decoded_4 = self.decoder_block_4(decoded_5, encoded_4)
 		decoded_3 = self.decoder_block_3(decoded_4, encoded_3)
 		decoded_2 = self.decoder_block_2(decoded_3, encoded_2)
 		decoded_1 = self.decoder_block_1(decoded_2, encoded_1)
