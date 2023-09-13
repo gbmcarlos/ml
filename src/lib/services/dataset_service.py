@@ -8,12 +8,11 @@ from .sketch_service import generate_sketch
 
 
 class GanDataset(Dataset):
-	def __init__(self, data_dir, tile_filter_prefix, rebuild=False, flow_threshold=0):
+	def __init__(self, data_dir, rebuild=False, flow_threshold=0):
 		self.rebuild = rebuild
 		self.flow_threshold = 0
 		self.data_dir = data_dir
-		path = os.path.join(data_dir, tile_filter_prefix + '*')
-		self.data = glob.glob(path)
+		self.data = glob.glob(data_dir)
 		print(f"Found {len(self.data)} training samples")
 
 	def __len__(self):

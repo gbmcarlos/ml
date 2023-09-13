@@ -10,7 +10,6 @@ download:
   target_size: 256
 train:
   training_data_folder: src/data/training/mountains
-  tile_filter_prefix: ASTGTMV003
   device_name: mps
   visualization_frequency: 15
   hyper:

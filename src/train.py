@@ -34,7 +34,6 @@ def train_gan(settings):
 	config_schema = Schema({
 		'train': {
 			'training_data_folder': str,
-			'tile_filter_prefix': str,
 			'device_name': str,
 			'visualization_frequency': int,
 			'hyper': {
@@ -78,9 +77,9 @@ def train_gan(settings):
 
 	return
 
-def get_dataset(data_folder, tile_filter_prefix, batch_size):
+def get_dataset(data_folder, batch_size):
 
-	training_dataset = dataset_service.GanDataset(data_folder, tile_filter_prefix)
+	training_dataset = dataset_service.GanDataset(data_folder)
 	training_dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True)
 
 	sketch, dem = next(iter(training_dataloader))
