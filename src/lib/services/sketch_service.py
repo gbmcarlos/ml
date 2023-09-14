@@ -7,7 +7,7 @@ import cv2
 from skimage.morphology import skeletonize
 
 
-def generate_sketch(dem, flow_threshold):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
+def sketch_dem(dem, flow_threshold):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
 
 	resized_dem = cv2.resize(dem, (128, 128))
 
@@ -75,9 +75,3 @@ def condition_raster(grid, raster):
 	flooded_raster = grid.fill_depressions(pit_filled_raster)
 	inflated_raster = grid.resolve_flats(flooded_raster)
 	return inflated_raster
-
-
-def plot(title, image):
-	print(title)
-	plt.imshow(image, cmap='Greys')
-	plt.show()
