@@ -55,7 +55,7 @@ class BaseGanTrainer:
 			if not self.should_continue():
 				print('Stopped execution')
 				break
-	
+
 	def visualize_batch(self, batch, name):
 		grid = self.get_image_grid(batch, 512)
 		image = wandb.Image(grid)
@@ -77,6 +77,8 @@ class BaseGanTrainer:
 		timestamp = calendar.timegm(current_gmt)
 		name = "checkpoint_" + str(timestamp) + ".tar"
 		print(f'Saving models to {name}')
+
+		# description = input("Checkpoint description: ")
 
 		checkpoint = self.get_checkpoint()
 

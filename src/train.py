@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from lib.services import dataset_service
 from lib.models import generator_model_v1 as generator_model, discriminator_model_v1 as discriminator_model
 from lib.trainers.WGanTrainer import WGanTrainer
+from lib.trainers.LSGanTrainer import LSGanTrainer
 
 
 def run():
@@ -40,7 +41,7 @@ def train_gan(settings):
 				'batch_size': int,
 				'epochs': int,
 				'gen_lr': float,
-				'critic_lr': float,
+				'disc_lr': float,
 				'betas': list,
 				'l1_lambda': int,
 				'gp_lambda': int,
@@ -58,17 +59,16 @@ def train_gan(settings):
 	
 	training_dataloader = get_dataset(
 		settings['training_data_folder'], 
-		settings['tile_filter_prefix'],
 		hyper['batch_size']
 	)
 
 	generator = generator_model.Generator(in_channels=4, out_channels=1).to(device)
-	critic = discriminator_model.Discriminator(in_channels_x=4, in_channels_y=1).to(device)
+	discriminator = discriminator_model.Discriminator(in_channels_x=4, in_channels_y=1, norm="batch", output="sigmoid").to(device)
 	generator_model.initialize_weights(generator)
-	generator_model.initialize_weights(critic)
+	generator_model.initialize_weights(discriminator)
 
-	trainer = WGanTrainer(
-		generator, critic,
+	trainer = LSGanTrainer(
+		generator, discriminator,
 		"src/data/checkpoints", hyper, device, training_dataloader, settings['visualization_frequency'], 
 		# True
 	)

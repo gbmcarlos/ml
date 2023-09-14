@@ -1,5 +1,4 @@
 import os
-import glob
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -10,9 +9,9 @@ from .sketch_service import generate_sketch
 class GanDataset(Dataset):
 	def __init__(self, data_dir, rebuild=False, flow_threshold=0):
 		self.rebuild = rebuild
-		self.flow_threshold = 0
+		self.flow_threshold = flow_threshold
 		self.data_dir = data_dir
-		self.data = glob.glob(data_dir)
+		self.data = os.listdir(data_dir)
 		print(f"Found {len(self.data)} training samples")
 
 	def __len__(self):
@@ -20,7 +19,7 @@ class GanDataset(Dataset):
 
 	def __getitem__(self, index):
 
-		data = np.load(self.data[index])
+		data = np.load(os.path.join(self.data_dir, self.data[index]))
 
 		dem_raw = data['dem']
 		dem = torch.from_numpy(dem_raw)
