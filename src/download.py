@@ -16,7 +16,7 @@ def run():
 	settings = read_settings(args.settings_path)
 
 	for dem, tile_id in download_dems(settings):
-		sketch_and_save(dem, tile_id, settings['flow_threshold'], settings['output_path'])
+		sketch_and_save(dem, tile_id, settings['flow_threshold'], settings['output_path'], settings['mode'])
 
 def read_settings(settings_path):
 	try:
@@ -31,6 +31,7 @@ def read_settings(settings_path):
 					'subtile_size': int,
 					'target_size': int,
 					'land_coverage_threshold': float,
+					'mode': str,
 					Optional('flow_threshold'): int,
 					Optional('output_path'): str
 				}
@@ -41,16 +42,11 @@ def read_settings(settings_path):
 	except Exception as e:
 		print(f"An error occurred while reading the settings file: {e}")
 
-def sketch_and_save(dem, tile_id, flow_threshold, output_path):
-	sketch = sketch_service.sketch_dem(dem, flow_threshold)
-	sketch = np.transpose(sketch, (1, 2, 0)) # CHW -> HWC
-	sketch = cv2.normalize(sketch, None, -1.0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+def sketch_and_save(dem, tile_id, flow_threshold, output_path, mode):
+	sketch = sketch_service.sketch_dem(dem, flow_threshold, mode)
 
-	# Prepare the dem
-	dem = cv2.normalize(dem, None, -1.0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-	dem = np.transpose(np.stack([dem], axis=0), (1, 2, 0)) # HW -> HWC
-
-	# Save the 2 together as an numpy arrays file
+	dem = np.stack([dem], axis=0)
+	
 	destination_path = os.path.join(output_path, tile_id) + ".npz"
 	np.savez(destination_path, dem=dem, sketch=sketch)
 

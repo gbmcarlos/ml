@@ -2,14 +2,15 @@ download:
   credentials_env_file: src/.env
   tiles_file: src/config/mountains.txt
   url_root: https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/ASTGTM.003/
-  output_path: src/data/training/mountains
+  output_path: src/data/training/mountains-mask
   tile_size: 3600
   subtile_size: 225
   land_coverage_threshold: 0.5
   flow_threshold: 230
   target_size: 256
+  mode: mask
 train:
-  training_data_folder: src/data/training/mountains
+  training_data_folder: src/data/training/mountains-mask
   device_name: mps
   visualization_frequency: 10
   hyper:

@@ -7,7 +7,7 @@ import cv2
 from skimage.morphology import skeletonize
 
 
-def sketch_dem(dem, flow_threshold):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
+def sketch_dem(dem, flow_threshold, mode='stack'):  # Given a DEM, extract the sea, the rivers and the ridges, and put them together in a 3 channel image
 
 	resized_dem = cv2.resize(dem, (128, 128))
 
@@ -22,9 +22,16 @@ def sketch_dem(dem, flow_threshold):  # Given a DEM, extract the sea, the rivers
 	sea = cv2.resize(sea, (256, 256))
 	rivers = simplify(cv2.resize(rivers, (256, 256)))
 	ridges = simplify(cv2.resize(ridges, (256, 256)))
-	sketch = np.stack([sea, rivers, ridges], axis=0)
 
-	return sketch
+	if mode == 'stack':
+		return np.stack([sea, rivers, ridges], axis=0)
+	elif mode == 'mask':
+		mask = np.zeros_like(sea) # Sea = 0
+		mask[sea==0] = 2 # Land = 2
+		mask[rivers==255] = 4 # Rivers = 4
+		mask[ridges==255] = 8 # Ridges = 8
+		mask = np.stack([mask], axis=0)
+		return mask
 
 
 def extract_sea(raster):  # Simple mask to extract the area of elevation 0
@@ -65,7 +72,7 @@ def simplify(flow):  # Accentuate everything and skeletonize it to 1 pixel width
 
 	output = flow
 	output = cv2.dilate(output, kernel=np.ones((10, 10), np.uint8), iterations=1) # Accentuate
-	output = (skeletonize(output)*225).astype('uint8') # Simplify
+	output = (skeletonize(output)*255).astype('uint8') # Simplify
 
 	return output
 
